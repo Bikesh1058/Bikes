@@ -14,6 +14,8 @@ const Contact = () => {
     message: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -21,34 +23,65 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Frontend validation
     if (
-      !formData.name ||
-      !formData.email ||
-      !formData.message
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.message.trim()
     ) {
       toast.error("Please fill all fields");
       return;
     }
 
-    toast.success("Message sent successfully!");
+    try {
+      setLoading(true);
 
-    setFormData({
-      name: "",
-      email: "",
-      message: "",
-    });
+      const response = await fetch(
+        "http://localhost:3000/api/contact",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to send message"
+        );
+      }
+
+      toast.success(data.message || "Message sent successfully!");
+
+      // Clear form after successful submission
+      setFormData({
+        name: "",
+        email: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("Contact form error:", error);
+
+      toast.error(
+        error.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="bg-slate-50 py-16">
-
       <div className="mx-auto max-w-6xl px-5 lg:px-8">
 
         <div className="mb-12 text-center">
-
           <p className="font-semibold uppercase tracking-wider text-green-600">
             Get In Touch
           </p>
@@ -61,7 +94,6 @@ const Contact = () => {
             Have questions about renting a bike? We are here
             to help.
           </p>
-
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
@@ -129,7 +161,6 @@ const Contact = () => {
               </div>
 
             </div>
-
           </div>
 
           {/* Form */}
@@ -149,7 +180,8 @@ const Contact = () => {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Enter your name"
-                className="w-full rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500"
+                disabled={loading}
+                className="w-full rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500 disabled:bg-slate-100"
               />
             </div>
 
@@ -164,7 +196,8 @@ const Contact = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500"
+                disabled={loading}
+                className="w-full rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500 disabled:bg-slate-100"
               />
             </div>
 
@@ -179,24 +212,25 @@ const Contact = () => {
                 value={formData.message}
                 onChange={handleChange}
                 placeholder="Write your message..."
-                className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500"
+                disabled={loading}
+                className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3.5 outline-none focus:border-green-500 disabled:bg-slate-100"
               />
             </div>
 
             <button
               type="submit"
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-4 font-bold text-white hover:bg-green-700"
+              disabled={loading}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-4 font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send size={18} />
-              Send Message
+
+              {loading ? "Sending..." : "Send Message"}
             </button>
 
           </form>
 
         </div>
-
       </div>
-
     </main>
   );
 };
